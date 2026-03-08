@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
-TOKEN = os.getenv("MTQ4MDMwMTY1Nzk4NzM1NDk3OQ.GxP6Oz.RForXjytf13Ey2Ielu7HWhQ7V_kvhpgh6lJIZo") or "OVDJE_STAVI_TOKEN"
+TOKEN = os.getenv("TOKEN") or "OVDJE_STAVI_TOKEN"
 SEF_CHANNEL_ID = 1480301092620468254  # OVDJE STAVI ID OD #sef KANALA
 REPORT_CHANNEL_ID = 1480308955979710464   # može ostati isti kanal
 
@@ -321,7 +321,8 @@ async def command_error(ctx, error):
         print(error)
 
 
-if not TOKEN or TOKEN == "MTQ4MDMwMTY1Nzk4NzM1NDk3OQ.GxP6Oz.RForXjytf13Ey2Ielu7HWhQ7V_kvhpgh6lJIZo":
+if not TOKEN or TOKEN == "TOKEN":
     raise ValueError("Moraš postaviti TOKEN u kodu ili kroz environment variable.")
+
 
 bot.run(TOKEN)
