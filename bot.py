@@ -9,6 +9,7 @@ from discord.ext import commands
 from aiohttp import web
 
 TOKEN = os.getenv("TOKEN")
+
 SEF_CHANNEL_ID = 1439301092520463524
 REPORT_CHANNEL_ID = 1439030955979106464
 
@@ -145,7 +146,9 @@ async def send_weekly_report():
     total = get_grand_total()
 
     if not rows:
-        await channel.send(f"📊 **Tjedni izvještaj sefa** ({week_label()})\nNema unosa ovaj tjedan.")
+        await channel.send(
+            f"📊 **Tjedni izvještaj sefa** ({week_label()})\nNema unosa ovaj tjedan."
+        )
         mark_report_sent()
         return
 
@@ -153,7 +156,7 @@ async def send_weekly_report():
     medals = ["🥇", "🥈", "🥉"]
 
     for i, (_, username, amount) in enumerate(rows[:10]):
-        prefix = medals[i] if i < 3 else f"{i+1}."
+        prefix = medals[i] if i < 3 else f"{i + 1}."
         lines.append(f"{prefix} {username}: **{amount}**")
 
     lines.append(f"\n💰 **Ukupno: {total}**")
@@ -255,7 +258,7 @@ async def top(ctx):
     lines = [f"**TOP lista sefa** ({week_label()})"]
 
     for i, (_, username, amount) in enumerate(rows[:10]):
-        prefix = medals[i] if i < 3 else f"{i+1}."
+        prefix = medals[i] if i < 3 else f"{i + 1}."
         lines.append(f"{prefix} {username}: **{amount}**")
 
     await ctx.send("\n".join(lines))
@@ -287,7 +290,10 @@ async def reportnow(ctx):
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def resetweek(ctx):
-    cursor.execute("DELETE FROM transactions WHERE created_at >= ?", (start_of_week().isoformat(),))
+    cursor.execute(
+        "DELETE FROM transactions WHERE created_at >= ?",
+        (start_of_week().isoformat(),)
+    )
     conn.commit()
     await ctx.send("Obrisani su svi unosi za ovaj tjedan.")
 
@@ -329,6 +335,7 @@ async def handle_root(request):
 async def start_web_server():
     app = web.Application()
     app.router.add_get("/", handle_root)
+
     runner = web.AppRunner(app)
     await runner.setup()
 
@@ -345,12 +352,23 @@ async def main():
 
     await start_web_server()
 
-    print("Čekam 30 sekundi prije Discord logina...")
-    await asyncio.sleep(30)
+    print("Čekam 60 sekundi prije prvog Discord logina...")
+    await asyncio.sleep(60)
 
-    await bot.start(TOKEN)
+    while True:
+        try:
+            print("Pokušavam spojiti bota na Discord...")
+            await bot.start(TOKEN)
+        except discord.HTTPException as e:
+            if e.status == 429:
+                print("Discord rate limit. Čekam 120 sekundi pa pokušavam opet...")
+                await asyncio.sleep(120)
+            else:
+                raise
+        except Exception as e:
+            print(f"Greška: {e}")
+            await asyncio.sleep(30)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
