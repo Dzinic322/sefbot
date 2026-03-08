@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
+from aiohttp import web
 
 TOKEN = os.getenv("TOKEN")
-SEF_CHANNEL_ID = 1480301092620468254  # OVDJE STAVI ID OD #sef KANALA
-REPORT_CHANNEL_ID = 1480308955979710464   # može ostati isti kanal
+SEF_CHANNEL_ID = 1439301092520463524
+REPORT_CHANNEL_ID = 1439030955979106464
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -137,6 +138,7 @@ def mark_report_sent():
 async def send_weekly_report():
     channel = bot.get_channel(REPORT_CHANNEL_ID)
     if channel is None:
+        print("Report kanal nije pronađen.")
         return
 
     rows = get_all_totals()
@@ -165,21 +167,20 @@ async def weekly_report_loop():
     while not bot.is_closed():
         now = datetime.now()
 
-        # Nedjelja = 6, šalje od 20:00 nadalje jednom tjedno
         if now.weekday() == 6 and now.hour >= 20 and not was_report_sent_this_week():
             try:
                 await send_weekly_report()
             except Exception as e:
                 print(f"Greška kod weekly reporta: {e}")
 
-        await asyncio.sleep(300)  # provjera svakih 5 minuta
+        await asyncio.sleep(300)
 
 
 @bot.event
 async def on_ready():
     print(f"Bot je online kao {bot.user}")
     if not hasattr(bot, "report_task_started"):
-        bot.loop.create_task(weekly_report_loop())
+        asyncio.create_task(weekly_report_loop())
         bot.report_task_started = True
 
 
@@ -321,9 +322,30 @@ async def command_error(ctx, error):
         print(error)
 
 
-if not TOKEN or TOKEN == "TOKEN":
-    raise ValueError("Moraš postaviti TOKEN u kodu ili kroz environment variable.")
+async def handle_root(request):
+    return web.Response(text="SefBot radi.")
 
 
-bot.run(TOKEN)
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", handle_root)
+    runner = web.AppRunner(app)
+    await runner.setup()
 
+    port = int(os.getenv("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+    print(f"Web server pokrenut na portu {port}")
+
+
+async def main():
+    if not TOKEN:
+        raise ValueError("TOKEN nije postavljen u Render Environment Variables.")
+
+    await start_web_server()
+    await bot.start(TOKEN)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
