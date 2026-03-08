@@ -139,7 +139,7 @@ def mark_report_sent():
 async def send_weekly_report():
     channel = bot.get_channel(REPORT_CHANNEL_ID)
     if channel is None:
-        print("Report kanal nije pronađen.")
+        print("Report kanal nije pronađen.", flush=True)
         return
 
     rows = get_all_totals()
@@ -174,14 +174,14 @@ async def weekly_report_loop():
             try:
                 await send_weekly_report()
             except Exception as e:
-                print(f"Greška kod weekly reporta: {e}")
+                print(f"Greška kod weekly reporta: {e}", flush=True)
 
         await asyncio.sleep(300)
 
 
 @bot.event
 async def on_ready():
-    print(f"Bot je online kao {bot.user}")
+    print(f"Bot je online kao {bot.user}", flush=True)
     if not hasattr(bot, "report_task_started"):
         asyncio.create_task(weekly_report_loop())
         bot.report_task_started = True
@@ -325,7 +325,7 @@ async def command_error(ctx, error):
         await ctx.send("Nemaš dozvolu za tu komandu.")
     else:
         await ctx.send("Dogodila se greška.")
-        print(error)
+        print(error, flush=True)
 
 
 async def handle_root(request):
@@ -343,7 +343,7 @@ async def start_web_server():
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
 
-    print(f"Web server pokrenut na portu {port}")
+    print(f"Web server pokrenut na portu {port}", flush=True)
 
 
 async def main():
@@ -352,22 +352,31 @@ async def main():
 
     await start_web_server()
 
-    print("Čekam 60 sekundi prije prvog Discord logina...")
+    print("Čekam 60 sekundi prije prvog Discord logina...", flush=True)
     await asyncio.sleep(60)
 
     while True:
         try:
-            print("Pokušavam spojiti bota na Discord...")
+            print("Pokušavam spojiti bota na Discord...", flush=True)
             await bot.start(TOKEN)
         except discord.HTTPException as e:
+            print(f"HTTP greška: {e}", flush=True)
             if e.status == 429:
-                print("Discord rate limit. Čekam 120 sekundi pa pokušavam opet...")
-                await asyncio.sleep(120)
+                print("Discord rate limit. Čekam 180 sekundi pa pokušavam opet...", flush=True)
+                try:
+                    await bot.close()
+                except Exception:
+                    pass
+                await asyncio.sleep(180)
             else:
                 raise
         except Exception as e:
-            print(f"Greška: {e}")
-            await asyncio.sleep(30)
+            print(f"Greška: {e}", flush=True)
+            try:
+                await bot.close()
+            except Exception:
+                pass
+            await asyncio.sleep(60)
 
 
 if __name__ == "__main__":
