@@ -344,8 +344,13 @@ async def main():
         raise ValueError("TOKEN nije postavljen u Render Environment Variables.")
 
     await start_web_server()
+
+    print("Čekam 30 sekundi prije Discord logina...")
+    await asyncio.sleep(30)
+
     await bot.start(TOKEN)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
