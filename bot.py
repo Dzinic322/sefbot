@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
-TOKEN = os.getenv("TOKEN") or "OVDJE_STAVI_TOKEN"
+TOKEN = os.getenv("TOKEN")
 SEF_CHANNEL_ID = 1480301092620468254  # OVDJE STAVI ID OD #sef KANALA
 REPORT_CHANNEL_ID = 1480308955979710464   # može ostati isti kanal
 
@@ -326,3 +326,4 @@ if not TOKEN or TOKEN == "TOKEN":
 
 
 bot.run(TOKEN)
+
